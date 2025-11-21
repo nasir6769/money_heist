@@ -1,7 +1,83 @@
-import 'package:flutter/material.dart';
+// STEP 4: Add Investment Prompt when savings >= 1000
 
-class MyBalanceScreen extends StatelessWidget {
+import 'package:flutter/material.dart';
+import '../services/supabase_service.dart';
+
+class MyBalanceScreen extends StatefulWidget {
   const MyBalanceScreen({super.key});
+
+  @override
+  State<MyBalanceScreen> createState() => _MyBalanceScreenState();
+}
+
+class _MyBalanceScreenState extends State<MyBalanceScreen> {
+  double walletBalance = 0;
+  double savingsBalance = 0;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    loadBalances();
+  }
+
+  Future<void> loadBalances() async {
+    try {
+      final wallet = await SupabaseService.getWalletBalance();
+      final savings = await SupabaseService.getSavingsBalance();
+
+      setState(() {
+        walletBalance = wallet;
+        savingsBalance = savings;
+        isLoading = false;
+      });
+
+      // ⭐ Step 4: Check for investment prompt
+      if (savings >= 1000) {
+        Future.delayed(const Duration(milliseconds: 600), () {
+          if (mounted) showInvestmentPopup();
+        });
+      }
+    } catch (e) {
+      print('Error loading balances: $e');
+      setState(() => isLoading = false);
+    }
+  }
+
+  void showInvestmentPopup() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Invest Your Savings',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          'You have saved ₹${savingsBalance.toStringAsFixed(2)}!\n\nWould you like to invest this amount in the stock market?',
+          style: const TextStyle(fontSize: 15),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Later', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/stocks');
+            },
+            child: const Text('Invest Now', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,252 +91,44 @@ class MyBalanceScreen extends StatelessWidget {
           ),
         ),
         child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // BACK BUTTON
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: const Icon(Icons.arrow_back, color: Colors.white, size: 28),
-                ),
-
-                const SizedBox(height: 20),
-
-                // TITLE
-                const Text(
-                  "My Balance",
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-
-                const SizedBox(height: 30),
-
-                // ⭐ MAIN BALANCE CARD
-                Container(
-                  width: double.infinity,
+          child: isLoading
+              ? const Center(child: CircularProgressIndicator(color: Colors.white))
+              : Padding(
                   padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        "Available Balance",
-                        style: TextStyle(color: Colors.black54, fontSize: 14),
-                      ),
-                      SizedBox(height: 10),
-                      Text(
-                        "₹10,000.00",
-                        style: TextStyle(
-                          fontSize: 34,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                      SizedBox(height: 10),
-                      Text(
-                        "Funds available for UPI payments & investments",
-                        style: TextStyle(color: Colors.black54, fontSize: 13),
-                      ),
+                    children: [
+                      const Text('My Balance',
+                          style: TextStyle(
+                              fontSize: 26,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 30),
+                      _balanceCard('Wallet Balance', walletBalance, Colors.green),
+                      const SizedBox(height: 16),
+                      _balanceCard('Auto Savings', savingsBalance, Colors.blue),
                     ],
                   ),
                 ),
-
-                const SizedBox(height: 25),
-
-                // ⭐ STATS CARDS (UPI total + Auto-invest)
-                Row(
-                  children: [
-                    Expanded(
-                      child: _smallStatCard(
-                        title: "UPI Payments",
-                        value: "₹15,000",
-                        color: Colors.green.shade700,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _smallStatCard(
-                        title: "Auto-Invested",
-                        value: "₹2,500",
-                        color: Colors.blue.shade700,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 30),
-
-                // ⭐ HISTORY TITLE
-                const Text(
-                  "Recent Activity",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-
-                const SizedBox(height: 14),
-
-                // ⭐ HISTORY BOX
-                Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.95),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    children: const [
-                      Text(
-                        "No recent activity",
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.black54,
-                        ),
-                      )
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 30),
-
-                // ⭐ CATEGORY TITLE
-                const Text(
-                  "Expense Categories",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // ⭐ CATEGORY CARDS (like Figma)
-                Row(
-                  children: [
-                    Expanded(
-                      child: _categoryCard(
-                        color: Colors.green,
-                        icon: Icons.fastfood,
-                        title: "Food",
-                        amount: "₹4,500",
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _categoryCard(
-                        color: Colors.blue,
-                        icon: Icons.flight_takeoff,
-                        title: "Travel",
-                        amount: "₹2,000",
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 16),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: _categoryCard(
-                        color: Colors.purple,
-                        icon: Icons.receipt_long,
-                        title: "Bills",
-                        amount: "₹1,200",
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _categoryCard(
-                        color: Colors.orange,
-                        icon: Icons.shopping_bag,
-                        title: "Shopping",
-                        amount: "₹3,000",
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 40),
-              ],
-            ),
-          ),
         ),
       ),
     );
   }
 
-  // ⭐ SMALL STATS CARD WIDGET
-  Widget _smallStatCard({
-    required String title,
-    required String value,
-    required Color color,
-  }) {
+  Widget _balanceCard(String title, double value, Color color) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.95),
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style: TextStyle(color: color, fontWeight: FontWeight.bold)),
+          Text(title, style: TextStyle(color: color, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          Text(value,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-        ],
-      ),
-    );
-  }
-
-  // ⭐ CATEGORY CARD WIDGET
-  Widget _categoryCard({
-    required Color color,
-    required IconData icon,
-    required String title,
-    required String amount,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.95),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CircleAvatar(
-            backgroundColor: color.withOpacity(0.15),
-            child: Icon(icon, color: color),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            amount,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.black54,
-            ),
-          ),
+          Text('₹${value.toStringAsFixed(2)}',
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
         ],
       ),
     );

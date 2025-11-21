@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'services/supabase_service.dart';
+import 'screens/my_investments_screen.dart';
 
+
+// Screens
 import 'screens/welcome_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/signup_screen.dart';
@@ -16,8 +20,13 @@ import 'screens/my_balance_screen.dart';
 
 import 'screens/profile_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/add_money_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await SupabaseService.initialize();
+
   runApp(const MyApp());
 }
 
@@ -26,12 +35,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Create a ColorScheme with explicit dark brightness
     final ColorScheme scheme =
         ColorScheme.fromSeed(seedColor: Colors.green, brightness: Brightness.dark);
 
     final theme = ThemeData(
-      // set brightness on ThemeData as well
       brightness: Brightness.dark,
       scaffoldBackgroundColor: const Color(0xFF001B10),
       colorScheme: scheme,
@@ -42,13 +49,9 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'MoneyHeist',
       theme: theme,
-
-      // First screen
-      initialRoute: '/',
-
-      // All routes
+      home: const AuthGate(),   // 👈 START HERE
       routes: {
-        '/': (context) => const WelcomeScreen(),
+        '/welcome': (context) => const WelcomeScreen(),
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignupScreen(),
         '/biometric': (context) => const BiometricScreen(),
@@ -73,7 +76,31 @@ class MyApp extends StatelessWidget {
 
         // Settings
         '/settings': (context) => const SettingsScreen(),
+
+        '/addmoney': (context) => const AddMoneyScreen(),
+        '/myinvestments': (context) => const MyInvestmentsScreen(),
+
       },
     );
+  }
+}
+
+/// ----------------------------------------------------------------------------
+///   AUTH GATE — Checks if user is logged in
+/// ----------------------------------------------------------------------------
+class AuthGate extends StatelessWidget {
+  const AuthGate({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final user = SupabaseService.currentUser;
+
+    // Already logged in → Go Home
+    if (user != null) {
+      return const HomeScreen();
+    }
+
+    // Not logged in → Go Welcome screen
+    return const WelcomeScreen();
   }
 }

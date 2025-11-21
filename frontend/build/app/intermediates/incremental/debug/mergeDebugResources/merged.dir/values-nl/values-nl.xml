@@ -35,7 +35,13 @@
     <string msgid="8623827134497363134" name="call_notification_ongoing_text">"Actief gesprek"</string>
     <string msgid="59049573811482460" name="call_notification_screening_text">"Een inkomend gesprek screenen"</string>
     <string msgid="5912733858573823945" name="confirm_device_credential_password">"Wachtwoord gebruiken"</string>
+    <string msgid="6083905920877235314" name="copy">"Kopiëren"</string>
+    <string msgid="3260749812566568062" name="copy_toast_msg">"Link naar klembord gekopieerd"</string>
     <string msgid="4776854077120974966" name="default_error_msg">"Onbekende fout"</string>
+    <string msgid="2427401033573778270" name="expand_button_title">"Geavanceerd"</string>
+    <string msgid="4566929209979330987" name="fallback_menu_item_copy_link">"Link kopiëren"</string>
+    <string msgid="3413186855122069269" name="fallback_menu_item_open_in_browser">"Openen in browser"</string>
+    <string msgid="7145444925855055364" name="fallback_menu_item_share_link">"Link delen"</string>
     <string msgid="1072308044213194243" name="fingerprint_dialog_touch_sensor">"Raak de vingerafdruksensor aan"</string>
     <string msgid="8216738333501875566" name="fingerprint_error_hw_not_available">"Hardware voor vingerafdruk niet beschikbaar."</string>
     <string msgid="6306988885793029438" name="fingerprint_error_hw_not_present">"Dit apparaat heeft geen vingerafdruksensor"</string>
@@ -46,6 +52,11 @@
     <string msgid="3791785319221634505" name="generic_error_no_device_credential">"Geen pincode, patroon of wachtwoord ingesteld."</string>
     <string msgid="1807436368654974044" name="generic_error_no_keyguard">"Dit apparaat ondersteunt geen pincode, patroon of wachtwoord."</string>
     <string msgid="7309881387583143581" name="generic_error_user_canceled">"Verificatie geannuleerd door gebruiker."</string>
+    <string msgid="6573031135582639649" name="not_set">"Niet ingesteld"</string>
+    <string msgid="6685851473431805375" name="preference_copied">"\'<ns1:g id="SUMMARY">%1$s</ns1:g>\' is gekopieerd naar het klembord."</string>
     <string msgid="6264217191555673260" name="search_menu_title">"Zoeken"</string>
     <string msgid="6277540029070332960" name="status_bar_notification_info_overflow">"999+"</string>
+    <string msgid="9167775378838880170" name="summary_collapsed_preference_list">"<ns1:g id="CURRENT_ITEMS">%1$s</ns1:g>, <ns1:g id="ADDED_ITEMS">%2$s</ns1:g>"</string>
+    <string msgid="3140233346420563315" name="v7_preference_off">"UIT"</string>
+    <string msgid="89551595707643515" name="v7_preference_on">"AAN"</string>
 </resources>

@@ -1,8 +1,49 @@
 import 'package:flutter/material.dart';
-import 'signup_screen.dart'; // ← already added
+import '../services/supabase_service.dart';
+import 'signup_screen.dart'; 
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  // Controllers for email & password
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  bool isLoading = false;
+
+  Future<void> loginUser() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter email & password")),
+      );
+      return;
+    }
+
+    try {
+      setState(() => isLoading = true);
+
+      await SupabaseService.signIn(email, password);
+
+      setState(() => isLoading = false);
+
+      // Login successful → Navigate to biometric
+      Navigator.pushReplacementNamed(context, '/biometric');
+    } catch (e) {
+      setState(() => isLoading = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Login failed: $e")),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,6 +106,7 @@ class LoginScreen extends StatelessWidget {
 
                 // Email Field
                 _inputField(
+                  controller: _emailController,
                   hint: "your@email.com",
                   icon: Icons.email_outlined,
                   obscure: false,
@@ -74,6 +116,7 @@ class LoginScreen extends StatelessWidget {
 
                 // Password Field
                 _inputField(
+                  controller: _passwordController,
                   hint: "********",
                   icon: Icons.lock_outline,
                   obscure: true,
@@ -81,7 +124,6 @@ class LoginScreen extends StatelessWidget {
 
                 const SizedBox(height: 10),
 
-                // Forgot Password
                 Align(
                   alignment: Alignment.centerRight,
                   child: Text(
@@ -95,13 +137,11 @@ class LoginScreen extends StatelessWidget {
 
                 const SizedBox(height: 30),
 
-                // ⭐⭐⭐ Login Button → Go To Biometric ⭐⭐⭐
+                // ⭐ Login Button ⭐
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/biometric');
-                    },
+                    onPressed: isLoading ? null : loginUser,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green.shade500,
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -109,13 +149,15 @@ class LoginScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    child: const Text(
-                      "Login",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                      ),
-                    ),
+                    child: isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                            "Login",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                            ),
+                          ),
                   ),
                 ),
 
@@ -136,8 +178,7 @@ class LoginScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const SignupScreen(),
-                            ),
+                                builder: (context) => const SignupScreen()),
                           );
                         },
                         child: Text(
@@ -161,8 +202,9 @@ class LoginScreen extends StatelessWidget {
   }
 }
 
-// Input field widget
+// Updated Input widget
 Widget _inputField({
+  required TextEditingController controller,
   required String hint,
   required IconData icon,
   required bool obscure,
@@ -174,6 +216,7 @@ Widget _inputField({
       borderRadius: BorderRadius.circular(10),
     ),
     child: TextField(
+      controller: controller,
       obscureText: obscure,
       decoration: InputDecoration(
         icon: Icon(icon, color: Colors.grey.shade700),

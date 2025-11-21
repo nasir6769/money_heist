@@ -1,11 +1,58 @@
 import 'package:flutter/material.dart';
+import '../services/supabase_service.dart';
 
-
-class WalletScreen extends StatelessWidget {
+class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
 
   @override
+  State<WalletScreen> createState() => _WalletScreenState();
+}
+
+class _WalletScreenState extends State<WalletScreen> {
+  bool isLoading = true;
+  double walletBalance = 0.0;
+  double savingsBalance = 0.0;
+  double totalInvested = 0.0;
+  List<dynamic> transactions = [];
+
+  @override
+  void initState() {
+    super.initState();
+    loadWalletData();
+  }
+
+  Future<void> loadWalletData() async {
+    try {
+      final user = SupabaseService.currentUser;
+      if (user == null) return;
+
+      final balance = await SupabaseService.getWalletBalance();
+      final savings = await SupabaseService.getSavingsBalance();
+      final txList = await SupabaseService.getTransactions();
+
+      double invested = 0;
+      for (final tx in txList) {
+        if (tx['type'] == 'investment') {
+          invested += (tx['amount'] as num).toDouble();
+        }
+      }
+
+      setState(() {
+        walletBalance = balance;
+        savingsBalance = savings;
+        totalInvested = invested;
+        transactions = txList;
+        isLoading = false;
+      });
+    } catch (_) {
+      setState(() => isLoading = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final totalBalance = walletBalance + savingsBalance;
+
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -17,188 +64,170 @@ class WalletScreen extends StatelessWidget {
           ),
         ),
         child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                
-                // ← BACK BUTTON
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: const Icon(Icons.arrow_back,
-                      size: 28, color: Colors.white),
-                ),
-
-                const SizedBox(height: 25),
-
-                // TITLE
-                const Text(
-                  "Wallet",
-                  style: TextStyle(
-                    fontSize: 28,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+          child: RefreshIndicator(
+            onRefresh: loadWalletData,
+            color: Colors.green,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: const Icon(Icons.arrow_back,
+                        size: 28, color: Colors.white),
                   ),
-                ),
-
-                const SizedBox(height: 30),
-
-                // ⭐ PURPLE PENDING INVESTMENT CARD
-                Container(
-                  padding: const EdgeInsets.all(22),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF8E2DE2), Color(0xFF4A00E0)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                  const SizedBox(height: 25),
+                  const Text(
+                    "Wallet Overview",
+                    style: TextStyle(
+                      fontSize: 28,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        "Pending Investment",
-                        style: TextStyle(color: Colors.white70, fontSize: 16),
-                      ),
-                      SizedBox(height: 10),
-                      Text(
-                        "₹0.00",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
+                  const SizedBox(height: 30),
+                  Container(
+                    padding: const EdgeInsets.all(22),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(18),
+                      color: Colors.green.shade700,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text("Total Balance",
+                            style: TextStyle(
+                                color: Colors.white70, fontSize: 16)),
+                        const SizedBox(height: 10),
+                        Text(
+                          "₹${totalBalance.toStringAsFixed(2)}",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 10),
-                      Text(
-                        "Amount collected from UPI payments",
-                        style: TextStyle(color: Colors.white70, fontSize: 14),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 25),
-
-                // ⭐ ACTION BUTTONS ROW
-                Row(
-                  children: [
-                    Expanded(
-                      child: _actionTile(
-                        icon: Icons.arrow_downward,
-                        title: "Transfer",
-                        subtitle: "To bank account",
-                      ),
+                        const SizedBox(height: 10),
+                        Text(
+                          "Wallet: ₹${walletBalance.toStringAsFixed(2)}  |  Savings: ₹${savingsBalance.toStringAsFixed(2)}",
+                          style: const TextStyle(
+                              color: Colors.white70, fontSize: 14),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _actionTile(
-                        icon: Icons.show_chart,
-                        title: "Investments",
-                        subtitle: "View history",
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 25),
-
-                // ⭐ SUMMARY CARD (Total invested + Total investments)
-                Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.95),
-                    borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Row(
+                  const SizedBox(height: 25),
+                  Row(
                     children: [
                       Expanded(
-                        child: _summaryTile(
-                          title: "Total Invested",
-                          value: "₹0.00",
+                        child: _actionTile(
+                          icon: Icons.arrow_downward,
+                          title: "Transfer",
+                          subtitle: "To bank account",
                         ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
-                        child: _summaryTile(
-                          title: "Total Investments",
-                          value: "0",
+                        child: _actionTile(
+                          icon: Icons.show_chart,
+                          title: "Invest",
+                          subtitle: "Start investing",
                         ),
                       ),
                     ],
                   ),
-                ),
-
-                const SizedBox(height: 25),
-
-                // ⭐ INVESTMENT HISTORY SECTION
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.95),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        "Investment History",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      SizedBox(height: 14),
-                      Center(
-                        child: Text(
-                          "No investments yet\nStart making payments to build your portfolio",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.black54,
+                  const SizedBox(height: 25),
+                  Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.95),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _summaryTile(
+                            title: "Total Invested",
+                            value: "₹${totalInvested.toStringAsFixed(2)}",
                           ),
                         ),
-                      )
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 25),
-
-                // ⭐ ABOUT WALLET SECTION
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.95),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        "About Your Wallet",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16,
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _summaryTile(
+                            title: "Transactions",
+                            value: "${transactions.length}",
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 12),
-                      Text("• Pending investments come from your UPI payments",
-                          style: TextStyle(color: Colors.black87)),
-                      SizedBox(height: 6),
-                      Text("• You can withdraw or reinvest anytime",
-                          style: TextStyle(color: Colors.black87)),
-                      SizedBox(height: 6),
-                      Text("• Stocks are purchased based on your preferences",
-                          style: TextStyle(color: Colors.black87)),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-
-                const SizedBox(height: 40),
-              ],
+                  const SizedBox(height: 25),
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.95),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Transactions",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        if (transactions.isEmpty)
+                          const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(12.0),
+                              child: Text(
+                                "No transactions yet",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                    fontSize: 14, color: Colors.black54),
+                              ),
+                            ),
+                          )
+                        else
+                          ...transactions.map(
+                            (tx) => Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 10.0),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    tx['type'] ?? 'Unknown',
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  Text(
+                                    "₹${(tx['amount'] as num).toDouble().toStringAsFixed(2)}",
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      color: (tx['type'] == 'debit')
+                                          ? Colors.red
+                                          : Colors.green.shade700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                ],
+              ),
             ),
           ),
         ),
@@ -206,7 +235,6 @@ class WalletScreen extends StatelessWidget {
     );
   }
 
-  // ⭐ ACTION TILE WIDGET
   Widget _actionTile({
     required IconData icon,
     required String title,
@@ -232,16 +260,11 @@ class WalletScreen extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
+              Text(title,
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(height: 3),
-              Text(
-                subtitle,
-                style: const TextStyle(color: Colors.black54),
-              ),
+              Text(subtitle, style: const TextStyle(color: Colors.black54)),
             ],
           )
         ],
@@ -249,7 +272,6 @@ class WalletScreen extends StatelessWidget {
     );
   }
 
-  // ⭐ SUMMARY TILE WIDGET
   Widget _summaryTile({required String title, required String value}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

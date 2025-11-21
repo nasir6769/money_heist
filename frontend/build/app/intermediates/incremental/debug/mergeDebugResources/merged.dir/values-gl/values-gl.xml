@@ -35,7 +35,13 @@
     <string msgid="8623827134497363134" name="call_notification_ongoing_text">"Chamada en curso"</string>
     <string msgid="59049573811482460" name="call_notification_screening_text">"Filtrando chamada entrante"</string>
     <string msgid="5912733858573823945" name="confirm_device_credential_password">"Usar contrasinal"</string>
+    <string msgid="6083905920877235314" name="copy">"Copiar"</string>
+    <string msgid="3260749812566568062" name="copy_toast_msg">"Copiouse a ligazón no portapapeis"</string>
     <string msgid="4776854077120974966" name="default_error_msg">"Produciuse un erro descoñecido"</string>
+    <string msgid="2427401033573778270" name="expand_button_title">"Configuración avanzada"</string>
+    <string msgid="4566929209979330987" name="fallback_menu_item_copy_link">"Copiar ligazón"</string>
+    <string msgid="3413186855122069269" name="fallback_menu_item_open_in_browser">"Abrir no navegador"</string>
+    <string msgid="7145444925855055364" name="fallback_menu_item_share_link">"Compartir ligazón"</string>
     <string msgid="1072308044213194243" name="fingerprint_dialog_touch_sensor">"Toca o sensor de impresión dixital"</string>
     <string msgid="8216738333501875566" name="fingerprint_error_hw_not_available">"O hardware de impresión dixital non está dispoñible."</string>
     <string msgid="6306988885793029438" name="fingerprint_error_hw_not_present">"Este dispositivo non ten sensor de impresión dixital"</string>
@@ -46,6 +52,11 @@
     <string msgid="3791785319221634505" name="generic_error_no_device_credential">"Non se estableceu ningún PIN, padrón nin contrasinal."</string>
     <string msgid="1807436368654974044" name="generic_error_no_keyguard">"Este dispositivo non permite usar un PIN, padrón ou contrasinal."</string>
     <string msgid="7309881387583143581" name="generic_error_user_canceled">"O usuario cancelou a autenticación."</string>
+    <string msgid="6573031135582639649" name="not_set">"Sen configurar"</string>
+    <string msgid="6685851473431805375" name="preference_copied">"Copiouse \"<ns1:g id="SUMMARY">%1$s</ns1:g>\" no portapapeis."</string>
     <string msgid="6264217191555673260" name="search_menu_title">"Buscar"</string>
     <string msgid="6277540029070332960" name="status_bar_notification_info_overflow">">999"</string>
+    <string msgid="9167775378838880170" name="summary_collapsed_preference_list">"<ns1:g id="CURRENT_ITEMS">%1$s</ns1:g>, <ns1:g id="ADDED_ITEMS">%2$s</ns1:g>"</string>
+    <string msgid="3140233346420563315" name="v7_preference_off">"DESACTIVADO"</string>
+    <string msgid="89551595707643515" name="v7_preference_on">"ACTIVADO"</string>
 </resources>

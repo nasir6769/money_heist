@@ -13,14 +13,31 @@ class _BiometricScreenState extends State<BiometricScreen> {
 
   bool isAuthenticating = false;
   bool isSuccess = false;
+  bool hasBiometrics = true;
 
-  Future<void> authenticateUser(String userName) async {
+  @override
+  void initState() {
+    super.initState();
+    checkBiometricSupport();
+  }
+
+  Future<void> checkBiometricSupport() async {
     try {
-      setState(() {
-        isAuthenticating = true;
-      });
+      bool canCheck = await auth.canCheckBiometrics;
+      List<BiometricType> types = await auth.getAvailableBiometrics();
 
-      // Slight delay for smooth UX
+      if (!canCheck || types.isEmpty) {
+        setState(() => hasBiometrics = false);
+      }
+    } catch (e) {
+      setState(() => hasBiometrics = false);
+    }
+  }
+
+  Future<void> authenticateUser() async {
+    try {
+      setState(() => isAuthenticating = true);
+
       await Future.delayed(const Duration(milliseconds: 500));
 
       bool authenticated = await auth.authenticate(
@@ -28,44 +45,31 @@ class _BiometricScreenState extends State<BiometricScreen> {
         options: const AuthenticationOptions(
           biometricOnly: true,
           stickyAuth: true,
+          useErrorDialogs: true,
         ),
       );
 
       if (authenticated) {
-        // Show success UI
         setState(() {
           isSuccess = true;
           isAuthenticating = false;
         });
 
-        // Wait 2 seconds → then go to home
         await Future.delayed(const Duration(seconds: 2));
 
         if (!mounted) return;
 
-        Navigator.pushReplacementNamed(
-          context,
-          '/home',
-          arguments: userName,
-        );
+        Navigator.pushReplacementNamed(context, '/home');
       } else {
-        setState(() {
-          isAuthenticating = false;
-        });
+        setState(() => isAuthenticating = false);
       }
     } catch (e) {
-      setState(() {
-        isAuthenticating = false;
-      });
+      setState(() => isAuthenticating = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // ⭐ GET THE NAME PASSED FROM SIGNUP
-    final String userName =
-        ModalRoute.of(context)!.settings.arguments as String? ?? "User";
-
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -84,7 +88,9 @@ class _BiometricScreenState extends State<BiometricScreen> {
                   ? successUI()
                   : isAuthenticating
                       ? authenticatingUI()
-                      : mainUI(userName),
+                      : hasBiometrics
+                          ? mainUI()
+                          : fallbackUI(), // ⭐ No biometrics → show fallback
             ),
           ),
         ),
@@ -92,8 +98,8 @@ class _BiometricScreenState extends State<BiometricScreen> {
     );
   }
 
-  // MAIN UI (Figma Screen 1)
-  Widget mainUI(String userName) {
+  // MAIN UI
+  Widget mainUI() {
     return Column(
       key: const ValueKey(1),
       mainAxisAlignment: MainAxisAlignment.center,
@@ -110,9 +116,7 @@ class _BiometricScreenState extends State<BiometricScreen> {
             color: Colors.white,
           ),
         ),
-
         const SizedBox(height: 30),
-
         const Text(
           "Biometric Authentication",
           style: TextStyle(
@@ -121,9 +125,7 @@ class _BiometricScreenState extends State<BiometricScreen> {
             color: Colors.white,
           ),
         ),
-
         const SizedBox(height: 8),
-
         Text(
           "Touch the fingerprint sensor to continue",
           style: TextStyle(
@@ -131,13 +133,11 @@ class _BiometricScreenState extends State<BiometricScreen> {
             color: Colors.green.shade300,
           ),
         ),
-
         const SizedBox(height: 50),
-
         SizedBox(
           width: 260,
           child: ElevatedButton(
-            onPressed: () => authenticateUser(userName),
+            onPressed: authenticateUser,
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green.shade500,
               padding: const EdgeInsets.symmetric(vertical: 14),
@@ -151,16 +151,10 @@ class _BiometricScreenState extends State<BiometricScreen> {
             ),
           ),
         ),
-
         const SizedBox(height: 15),
-
         TextButton(
           onPressed: () {
-            Navigator.pushReplacementNamed(
-              context,
-              '/home',
-              arguments: userName,
-            );
+            Navigator.pushReplacementNamed(context, '/home');
           },
           child: const Text(
             "Skip for Now",
@@ -171,7 +165,44 @@ class _BiometricScreenState extends State<BiometricScreen> {
     );
   }
 
-  // AUTHENTICATING UI (Figma Screen 2)
+  // UI when biometrics not available
+  Widget fallbackUI() {
+    return Column(
+      key: const ValueKey(4),
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(Icons.warning_amber_rounded, size: 80, color: Colors.white),
+        const SizedBox(height: 20),
+        const Text(
+          "No Biometric Support",
+          style: TextStyle(
+            fontSize: 22,
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 10),
+        const Text(
+          "Your device does not support fingerprint/face unlock.",
+          style: TextStyle(color: Colors.white70),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 30),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.pushReplacementNamed(context, '/home');
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.green.shade500,
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 40),
+          ),
+          child: const Text("Continue to App"),
+        ),
+      ],
+    );
+  }
+
+  // AUTHENTICATING UI
   Widget authenticatingUI() {
     return Column(
       key: const ValueKey(2),
@@ -189,35 +220,22 @@ class _BiometricScreenState extends State<BiometricScreen> {
             color: Colors.white,
           ),
         ),
-
         const SizedBox(height: 30),
-
         const Text(
-          "Biometric Authentication",
+          "Authenticating...",
           style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
+            fontSize: 22,
             color: Colors.white,
+            fontWeight: FontWeight.bold,
           ),
         ),
-
-        const SizedBox(height: 10),
-
-        Text(
-          "Authenticating...",
-          style: TextStyle(color: Colors.green.shade300),
-        ),
-
         const SizedBox(height: 25),
-
-        const CircularProgressIndicator(
-          color: Colors.white,
-        ),
+        const CircularProgressIndicator(color: Colors.white),
       ],
     );
   }
 
-  // SUCCESS UI (Figma Screen 3)
+  // SUCCESS UI
   Widget successUI() {
     return Column(
       key: const ValueKey(3),
@@ -235,9 +253,7 @@ class _BiometricScreenState extends State<BiometricScreen> {
             color: Colors.white,
           ),
         ),
-
         const SizedBox(height: 20),
-
         const Text(
           "Authentication Successful!",
           style: TextStyle(
